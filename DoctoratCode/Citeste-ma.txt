@@ -1,0 +1,16 @@
+-trebuie refacut codul pentru citirea fisierelor de test.
+	-implementarea trebuie facuta cu OpenpyXl
+
+-interpretarea rezultatelor se va face cu ajutorul ecuatiilor diferentiale ale unui schimbator de caldura
+	-implementarea lor se va face cu FiPy
+		-caderile de presiune pe aer se vor implementa folosind o ecuatie diferentiala
+		-determinarea coeficientilor de schimb termic convectiv se va realiza prin calcul iterativ.
+		-sa creez un pachet nou pentru calculul unui schimbator de caldura?
+			-ar trebuii sa creez schimbatorul astfel incat sa se poata folosii dictionarul din python.
+
+-simularile se realizeaza cu Autodesk Simulation
+	-interpretarea rezultatelor se va face cu python si matplotlib
+	-simularile se vor face in 2D pentru aripioara ondulata cu capete drepte, si se va folosii analiza scalara pentru determinarea
+	caderii de presiune pe aer.
+	-trebuie sa se poata schimba parametrii si resimula, vezi daca poti si ai vreme sa folosesti metoda taguchii pentru determinarea
+	noilor parametrii.
