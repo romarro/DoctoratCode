@@ -5,6 +5,9 @@
 	-implementarea lor se va face cu FiPy
 		-caderile de presiune pe aer se vor implementa folosind o ecuatie diferentiala
 		-determinarea coeficientilor de schimb termic convectiv se va realiza prin calcul iterativ.
+			-fiecare punct de masura defineste un schimbator de caldura avand aceleasi caracteristici geometrice dar cu constante diferite.
+			-fiecare punct de masura este independent de celelalte puncte de masura => se poate realiza o prelucrare in paralel folosind Queue cu 
+			numarul de nuclee stabilit pentru prelucrarea datelor de masura. 
 		-sa creez un pachet nou pentru calculul unui schimbator de caldura?
 			-ar trebuii sa creez schimbatorul astfel incat sa se poata folosii dictionarul din python.
 
