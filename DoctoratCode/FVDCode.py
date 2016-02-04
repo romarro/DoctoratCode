@@ -66,9 +66,9 @@ ha2 = 0.008/2.0          #m  -jumatate din inaltimea canalului de aer
 hw2 = 0.0022/2.0         #m  -jumatate din inalitmea canalului de apa
 
 #volumul total al aerului din schimbator este egal cu:
-Vola = L*G*(ha2)*(35+1)     #m^3  (35 sunt numarul de canale de apa)
+Vola = L*G*(2*ha2)*(35+1)     #m^3  (35 sunt numarul de canale de apa)
 Ata = 14.59                 #m^2
-Volw = L*G*(hw2)*(35)       #m^3
+Volw = L*G*(2*hw2)*(35)       #m^3
 Atw = 5.3998                #m^2
 Vol_al = L*G*0.5e-3*(35+1)  #m^3 este un pic mai mare volumul aluminiului  
 
@@ -89,16 +89,14 @@ print("Toutw=%.2f [C]"%T1out_w)
 alpha1a=alphaa*Ata
 alpha1w=alphaw*Atw
 
-
-
-nx = 200
+nx = 100
 dx = L/nx
 ny = 20
 dy = G/ny
 
 mesh2d = Grid2D(dx=dx,dy=dy,nx=nx,ny=ny)
 Tc = CellVariable(mesh=mesh2d,name="$T_{aer}$",value=Tina,hasOld=1)
-Th = CellVariable(mesh=mesh2d,name='$T_{apa}$',value=Tinw,hasOld=1)
+Th = CellVariable(mesh=mesh2d,name='$T_{apa}$',value=Tina,hasOld=1)
 Ts =CellVariable(mesh=mesh2d,name='$T_{perete}$',value=Tina,hasOld=1) #
 
 Tc.constrain(Tina,mesh2d.facesBottom)
@@ -111,18 +109,27 @@ eqcold=rhoa*cpa*Vola*TransientTerm(1.,var=Tc) +ma*cpa*G*PowerLawConvectionTerm((
 eqwal=TransientTerm(cp_al*rho_al*Vol_al,var=Ts) == alpha1w*(Th-ImplicitSourceTerm(1.,var=Ts)) + alpha1a*effa*(Tc-ImplicitSourceTerm(1.,var=Ts))
 eqhot=rhow*cpw*Volw*TransientTerm(1.,var=Th) + mw*cpw*L*PowerLawConvectionTerm((1.,0.0),var=Th) == alpha1w*(Ts-ImplicitSourceTerm(1.,var=Th))
 
+aspectratio=.5
 if __name__=='__main__':
-    vTc = Matplotlib2DViewer(Tc,'Temperatura aerului in racitor',axes=ax1,figaspect=2.)
-    vTs = Matplotlib2DViewer(Ts,'temperatura peretelui',axes=ax2,figaspect=2.)
-    vTh = Matplotlib2DViewer(Th,'Temperatura apei in racitor',axes=ax3,figaspect=2.)
+    vTc = Matplotlib2DViewer(Tc,'a. Temperatura aerului',axes=ax1,figaspect=aspectratio,datamin=Tina-0.5,datamax=Touta+0.5)
+    #ax1.set_ylabel('Grosimea [m]')
+    ax1.yaxis.set_ticks([0.0,0.02,0.04,0.06,0.08])
+    vTs = Matplotlib2DViewer(Ts,'b. Temperatura peretelui',axes=ax2,figaspect=aspectratio,datamin=Toutw-2.,datamax=Tinw+0.5)
+    ax2.set_ylabel('Grosimea [m]')
+    ax2.yaxis.set_ticks([0.0,0.02,0.04,0.06,0.08])
+    vTh = Matplotlib2DViewer(Th,'c. Temperatura apei',axes=ax3,figaspect=aspectratio,datamin=Toutw-2.,datamax=Tinw+0.5)
+    #ax3.set_ylabel('Grosimea [m]')
+    ax3.set_xlabel('Lungimea [m]')
+    ax3.yaxis.set_ticks([0.0,0.02,0.04,0.06,0.08])
     viewer = MultiViewer([vTc,vTs,vTh]) #,datamin=Tina-1.,datamax=Tinw+1.)
 
 eqs=eqcold & eqwal & eqhot
 dt=.05
-steps=50
+steps=70
 
 Tmouta=np.zeros(steps)
 Tmoutw=np.zeros(steps)
+Tmsurf=np.zeros(steps)
 
 print('begin calc...')
 for step in range(steps):
@@ -132,33 +139,49 @@ for step in range(steps):
     eqs.solve(dt=dt)
     Tmouta[step]=np.mean(Tc.faceValue[mesh2d.facesTop.value].value)
     Tmoutw[step]=np.mean(Th.faceValue[mesh2d.facesRight.value].value)
+    Tmsurf[step]=np.mean(Ts.value)
     ax1.set_aspect(2)
     ax2.set_aspect(2)
     ax3.set_aspect(2)
     viewer.plot()
-    print('time=%.2f'%(step*dt))
-print('final t=%.2f'%(40*dt))
+    if step%8==0:
+        fig1.suptitle('timp = %.2f'%(step*dt))
+        fig1.savefig('heatmap%.1f.png'%(step*dt),dpi=300.0)
+    print('timp = %.2f [s]'%(step*dt))
+
+print('final t=%.2f [s]'%(steps*dt))
 
 T2outa=np.mean(Tc.faceValue[mesh2d.facesTop.value].value)
 T2outw=np.mean(Th.faceValue[mesh2d.facesRight.value].value)
 print("Tmouta=%.3f [C]"%T2outa)
 print("Tmoutw=%.3f [C]"%T2outw)
-fig1.savefig('heatmap.png')
+fig1.suptitle('timp = %.2f [s]'%(steps*dt))
+fig1.savefig('heatmap.png',dpi=300.0)
 
 fig2 = plt.figure(2)
-ax = plt.subplot(211)
+ax = plt.subplot(311)
 time=np.array(range(steps))*dt
 plt.plot(time,Tmouta,'b-')
-plt.title('Temperatura medie de iesire a aerului')
-plt.xlabel('Timp [s]')
-plt.ylabel('T [C]')
+plt.title('a. Temperatura medie de iesire a aerului')
+plt.ylabel('$To_c [\degree C]$')
+ax.grid(True)
 
-ax = plt.subplot(212,sharex=ax)
+
+ax = plt.subplot(312,sharex=ax)
+plt.plot(time,Tmsurf,'g-')
+plt.title('b. Temperatura medie a peretelui')
+plt.ylabel('$Ts [\degree C]$')
+ax.grid(True)
+
+ax = plt.subplot(313,sharex=ax)
 plt.plot(time,Tmoutw,'r-')
-plt.title('Temperatura meide de iesire a apei')
+plt.title('c. Temperatura meide de iesire a apei')
+plt.ylabel('$To_h [\degree C]$')
 plt.xlabel('Timp [s]')
-plt.ylabel('T [C]')
+ax.grid(True)
 
-fig2.savefig('Tmout.png')
+plt.tight_layout()
+
+fig2.savefig('Tmout.png',dpi=300.0)
 
 print("gata")
